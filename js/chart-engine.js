@@ -1,0 +1,44 @@
+function dg(box,k){box.innerHTML=BX[k]?'<div class="grid">'+BX[k].map(b=>'<div class="card" style="border-left:4px solid '+b[2]+'"><b>'+b[0]+'</b><p class="mut">'+b[1]+'</p></div>').join('')+'</div>':'<svg class="ch" viewBox="0 0 420 '+SV[k][0]+'" role="img" aria-label="Diagram ilustrasi">'+SV[k][1]+'</svg>'}
+function series(seed,n,p,d){let s=seed;const r=()=>(s=(s*1664525+1013904223)%4294967296)/4294967296,o=[];for(let i=0;i<n;i++){const op=p,cl=op+(r()-.5)*6+d,h=Math.max(op,cl)+r()*3+.3,l=Math.min(op,cl)-r()*3-.3;o.push({o:+op.toFixed(1),h:+h.toFixed(1),l:+l.toFixed(1),c:+cl.toFixed(1)});p=cl}return o}
+function drawChart(svg,cs,o={}){
+const Wd=o.w||640,Ht=o.h||320,P=44,n=o.n??cs.length;svg.setAttribute('viewBox','0 0 '+Wd+' '+Ht);svg.innerHTML='';
+const vc=cs.slice(0,n),hi=Math.max(...vc.map(c=>c.h)),lo=Math.min(...vc.map(c=>c.l)),r=(hi-lo)||1,top=hi+r*.1,bot=lo-r*.1,y=v=>P/2+(top-v)/(top-bot)*(Ht-P);
+for(let k=0;k<=4;k++){const v=bot+(top-bot)*k/4;el('line',{x1:P,x2:Wd-8,y1:y(v),y2:y(v),stroke:'#293750'},svg);el('text',{x:4,y:y(v)+4,fill:'#94A3B8','font-size':11},svg).textContent=v.toFixed(1)}
+(o.lines||[]).forEach(l=>{el('line',{x1:P,x2:Wd-8,y1:y(l),y2:y(l),stroke:'#38BDF8','stroke-dasharray':'5 4'},svg);el('text',{x:Wd-10,y:y(l)-3,fill:'#38BDF8','font-size':11,'text-anchor':'end'},svg).textContent=l.toFixed(1)});
+const st=(Wd-P-8)/cs.length,bw=Math.min(st*.6,o.bw||56),hits=[];
+cs.forEach((c,i)=>{if(i>=n||!valid(c))return;const cx=P+st*(i+.5),col=c.c>=c.o?'#22C55E':'#EF4444',mx=Math.max(c.o,c.c),mn=Math.min(c.o,c.c),bx=cx-bw/2,by=y(mx),bh=Math.max(y(mn)-y(mx),2);
+if(o.sel===i)el('rect',{x:cx-st/2,y:4,width:st,height:Ht-8,fill:'#FBBF2418'},svg);
+el('line',{x1:cx,x2:cx,y1:y(c.h),y2:y(c.l),stroke:col,'stroke-width':2},svg);el('rect',{x:bx,y:by,width:bw,height:bh,fill:col,rx:2},svg);
+const G={body:[bx,by,bw,bh],upper:[cx-8,y(c.h),16,Math.max(by-y(c.h),0)],lower:[cx-8,by+bh,16,Math.max(y(c.l)-by-bh,0)],high:[cx-14,y(c.h)-14,28,28],low:[cx-14,y(c.l)-14,28,28],open:[bx-30,y(c.o)-9,30,18],close:[bx+bw,y(c.c)-9,30,18]};
+if(o.parts){el('line',{x1:bx-18,x2:bx,y1:y(c.o),y2:y(c.o),stroke:'#F1F5F9','stroke-width':3},svg);el('line',{x1:bx+bw,x2:bx+bw+18,y1:y(c.c),y2:y(c.c),stroke:'#F1F5F9','stroke-width':3},svg);
+[c.h,c.l].forEach(v=>el('circle',{cx,cy:y(v),r:5,fill:'#F1F5F9'},svg));
+if(o.labels){const T=(x,yy,t,a)=>{el('text',{x,y:yy,fill:'#F1F5F9','font-size':12,'text-anchor':a||'start'},svg).textContent=t};
+T(cx+12,y(c.h)+4,'High '+c.h);T(cx+12,y(c.l)+4,'Low '+c.l);T(bx-22,y(c.o)+4,'Open '+c.o,'end');T(bx+bw+22,y(c.c)+4,'Close '+c.c);
+if(G.upper[3]>26)T(cx-12,y(c.h)+G.upper[3]/2+4,'Upper wick','end');if(G.lower[3]>26)T(cx-12,by+bh+G.lower[3]/2+4,'Lower wick','end');if(bh>20)T(cx,by+bh/2+4,'Body','middle')}
+if(o.hl)o.hl.parts.forEach(p=>el('rect',{x:G[p][0]-3,y:G[p][1]-3,width:G[p][2]+6,height:G[p][3]+6,fill:'none',stroke:o.hl.col,'stroke-width':2.5,'stroke-dasharray':'4 3',rx:4},svg));
+['body','upper','lower','open','close','high','low'].forEach(k=>el('rect',{x:G[k][0],y:G[k][1],width:G[k][2],height:G[k][3],fill:'transparent','data-part':k,style:'cursor:pointer'},svg))}
+else{const h=el('rect',{x:cx-st/2,y:0,width:st,height:Ht,fill:'transparent','data-i':i,style:'cursor:pointer'},svg);hits.push(h)}});
+if(o.onPart)svg.onclick=e=>{const p=e.target.getAttribute&&e.target.getAttribute('data-part');if(p)o.onPart(p)};
+hits.forEach(h=>{const i=+h.getAttribute('data-i'),c=cs[i];h.onmousemove=e=>{tip.style.display='block';tip.style.left=e.clientX+12+'px';tip.style.top=e.clientY+12+'px';tip.textContent='Candle '+(i+1)+(c.c>=c.o?' (bullish)':' (bearish)')+'\nO '+c.o+'  H '+c.h+'\nL '+c.l+'  C '+c.c};h.onmouseleave=()=>tip.style.display='none';h.onclick=()=>o.onSel&&o.onSel(i)})}
+function anatomy(box,c){box.innerHTML='<svg class="ch" role="img" aria-label="Candlestick besar dengan bagian yang dapat diklik"></svg><div class="row"><button class="btn" data-a="l">Hide Labels</button><button class="btn pri" data-a="q">Quiz Me</button></div><div class="info" aria-live="polite">Klik bagian candle untuk melihat namanya. Data simulasi.</div>';
+let lab=true,quiz=null,hl=null,qi=0;const svg=box.querySelector('svg'),info=box.querySelector('.info'),ks=Object.keys(PN);
+const draw=()=>drawChart(svg,[c],{w:420,h:340,bw:80,parts:1,labels:lab,hl,onPart});
+function onPart(p){if(quiz){const ok=p==quiz;hl={parts:[quiz],col:ok?'#22C55E':'#FBBF24'};info.innerHTML=(ok?'<b>Benar.</b> ':'<b>Belum tepat.</b> Anda memilih '+PN[p][0]+'. Yang diminta '+PN[quiz][0]+': ')+PN[quiz][0]+' adalah '+PN[quiz][1]+'.';quiz=null}else{hl={parts:[p],col:'#FBBF24'};info.innerHTML='<b>'+PN[p][0]+'</b>: '+PN[p][1]+'.'}draw()}
+box.onclick=e=>{const a=e.target.dataset.a;if(a=='l'){lab=!lab;e.target.textContent=lab?'Hide Labels':'Show Labels';draw()}if(a=='q'){lab=false;box.querySelector('[data-a=l]').textContent='Show Labels';quiz=ks[qi++%ks.length];hl=null;info.innerHTML='Quiz: klik <b>'+PN[quiz][0]+'</b>.';draw()}};draw()}
+function seriesW(box,cs){box.innerHTML='<svg class="ch" role="img" aria-label="Chart candlestick simulasi"></svg><div class="row"><button class="btn" data-a="p">Candle sebelumnya</button><button class="btn" data-a="n">Candle berikutnya</button><button class="btn pri" data-a="play">Play</button><button class="btn" data-a="pause">Pause</button><button class="btn" data-a="r">Reset</button><button class="btn" data-a="zi">Zoom +</button><button class="btn" data-a="zo">Zoom -</button><button class="btn" data-a="pl">Geser kiri</button><button class="btn" data-a="pr">Geser kanan</button><button class="btn" data-a="gh">Garis di High</button><button class="btn" data-a="gl">Garis di Low</button><button class="btn" data-a="rg">Mode tandai range: mati</button><button class="btn" data-a="x">Hapus garis</button></div><div class="info" aria-live="polite"></div>';
+let n=Math.min(5,cs.length),sel=null,lines=[],t=null,rm=false,rg=null,dr=null,vs=0,vc=cs.length;const svg=box.querySelector('svg'),info=box.querySelector('.info'),cur=()=>sel??n-1,stop=()=>{clearInterval(t);t=null},sub=()=>cs.slice(vs,vs+vc),fix=()=>{vc=Math.max(Math.min(4,cs.length),Math.min(vc,cs.length));vs=Math.max(0,Math.min(vs,Math.max(0,n-vc)))},fol=()=>{if(n>vs+vc)vs=n-vc};
+const ix=e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)*640/r.width,k=Math.floor((x-44)/((640-52)/sub().length));return Math.max(vs,Math.min(n-1,vs+k))},rs=()=>{const s=cs.slice(rg[0],rg[1]+1);return[Math.max(...s.map(x=>x.h)),Math.min(...s.map(x=>x.l))]};
+function draw(){fix();const c=cs[cur()],sb=sub();let L=lines.slice();if(rg){const[h,l]=rs();L=L.concat([h,l,(h+l)/2])}
+drawChart(svg,sb,{n:Math.max(1,Math.min(sb.length,n-vs)),lines:L,sel:rm?null:cur()-vs,onSel:rm?null:i=>{sel=i+vs;draw()}});
+if(rg){const[h,l]=rs();info.textContent='Range candle '+(rg[0]+1)+' sampai '+(rg[1]+1)+': Range High '+h+', Range Low '+l+', midpoint '+((h+l)/2).toFixed(2)+'. Data simulasi.'}else info.textContent='Candle '+(cur()+1)+' ('+(c.c>=c.o?'bullish':'bearish')+'): Open '+c.o+', High '+c.h+', Low '+c.l+', Close '+c.c+'. Tampil '+sb.length+' candle. Data simulasi.'}
+const pts=new Map(),pdist=()=>{const a=[...pts.values()];return Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])};let pd=0;svg.style.touchAction='pan-y';
+svg.onwheel=e=>{if(!e.ctrlKey&&!e.shiftKey)return;e.preventDefault();if(e.deltaY<0){vc=Math.max(4,vc-2);vs=Math.max(0,n-vc)}else vc=Math.min(cs.length,vc+2);draw()};
+svg.onpointerdown=e=>{pts.set(e.pointerId,[e.clientX,e.clientY]);if(pts.size==2){pd=pdist();dr=null;return}if(!rm)return;dr=ix(e);rg=[dr,dr];draw()};
+svg.onpointermove=e=>{if(pts.has(e.pointerId))pts.set(e.pointerId,[e.clientX,e.clientY]);if(pts.size==2){const d=pdist();if(pd&&d>pd*1.15){vc=Math.max(4,vc-2);vs=Math.max(0,n-vc);pd=d;draw()}else if(pd&&d<pd*.87){vc=Math.min(cs.length,vc+2);pd=d;draw()}return}if(rm&&dr!=null){const i=ix(e);rg=[Math.min(dr,i),Math.max(dr,i)];draw()}};
+svg.onpointerup=e=>{pts.delete(e.pointerId);pd=0;dr=null};svg.onpointercancel=svg.onpointerup;
+box.onclick=e=>{const a=e.target.dataset.a;if(!a)return;if(a=='p'){stop();n=Math.max(1,n-1);sel=null;if(rg&&rg[1]>=n)rg=null}if(a=='n'){n=Math.min(cs.length,n+1);sel=null;fol()}
+if(a=='play'&&!t)t=setInterval(()=>{if(n>=cs.length)return stop();n++;sel=null;fol();draw()},600);if(a=='pause')stop();if(a=='r'){stop();n=Math.min(5,cs.length);sel=null;lines=[];rg=null;vs=0;vc=cs.length}
+if(a=='zi'){vc=Math.max(4,vc-4);vs=Math.max(0,n-vc)}if(a=='zo'){vc=Math.min(cs.length,vc+4)}if(a=='pl')vs=Math.max(0,vs-3);if(a=='pr')vs=vs+3;
+if(a=='gh')lines.push(cs[cur()].h);if(a=='gl')lines.push(cs[cur()].l);if(a=='x'){lines=[];rg=null}
+if(a=='rg'){rm=!rm;e.target.textContent='Mode tandai range: '+(rm?'aktif (tarik di chart)':'mati');svg.style.touchAction=rm?'none':'pan-y';if(!rm)rg=null}draw()};draw()}
+
