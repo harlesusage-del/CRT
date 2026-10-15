@@ -21,3 +21,5 @@ Akun dan database (Supabase)
 Cara kerja sinkronisasi: progress tetap ditulis ke LocalStorage lalu dikirim ke tabel progress (jeda 1,5 detik). Saat login pertama, progress lokal digabung dengan data akun (gabungan, bukan menimpa). Jika browser dipakai akun lain, data lokal akun sebelumnya tidak digabung. Keluar akan menghapus data lokal. Data dari server selalu divalidasi ulang sebelum dipakai.
 
 Catatan keamanan: anon key memang publik dan aman selama RLS aktif. Progress dihitung di sisi klien, sehingga pengguna yang ahli dapat mengubah data miliknya sendiri; itu tidak memengaruhi pengguna lain. Aktifkan konfirmasi email dan batasi rate limit auth di dashboard Supabase untuk produksi.
+
+Market Lab: halaman latihan membaca data pasar nyata (kripto lewat Binance Public Data, endpoint data-api.binance.vision). Mode Live memperbarui candle tiap 30 detik dan hanya memakai candle yang sudah tutup. Mode Replay membuka candle riwayat satu per satu tanpa look-ahead. Ini bukan sinyal trading. Perlu koneksi internet; jika Binance tidak dapat dijangkau, halaman menampilkan pesan dan tombol coba lagi.

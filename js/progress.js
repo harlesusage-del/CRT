@@ -7,7 +7,7 @@ function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.versio
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){store=false}if(typeof cloudQueue=='function')cloudQueue()}
 S=load();
 const xpT=()=>S.xpLog.reduce((a,x)=>a+x[1],0);
-function xp(id,n){if(S.xpLog.some(x=>x[0]===id))return 0;S.xpLog.push([id,n]);save();return n}
+function xp(id,n){if(S.xpLog.some(x=>x[0]===id))return 0;S.xpLog.push([id,n]);save();if(typeof toast=='function')toast('+'+n+' XP');return n}
 function ach(k){if(!S.ach.includes(k)){S.ach.push(k);save()}}
 const wk=v=>Object.entries(S.weak).filter(([k,w])=>!w.done&&(v==null||parseInt(MIN[k][1])==v));
 /* ===== Level 0-2: versi umum (menimpa fungsi level-1 di atas) ===== */
